@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Калькулятор зон исследования</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 30px; 
+            background: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 25px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1a5d1a;
+            text-align: center;
+        }
+        .step {
+            margin: 25px 0;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        label {
+            margin-left: 8px;
+            cursor: pointer;
+        }
+        input[type="checkbox"], input[type="radio"] {
+            cursor: pointer;
+        }
+        button {
+            background: #1a5d1a;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #134713;
+        }
+        #result {
+            margin-top: 25px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            color: #1a5d1a;
+        }
+        .warning {
+            color: #d32f2f;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🩺 Калькулятор зон исследования</h1>
+        
+        <div class="step">
+            <h3>Шаг 1. Выберите исследования:</h3>
+            <input type="checkbox" id="kt_ogk" name="research" value="КТ ОГК">
+            <label for="kt_ogk">КТ органов грудной клетки (ОГК)</label><br>
+            
+            <input type="checkbox" id="kt_obp" name="research" value="КТ ОБП">
+            <label for="kt_obp">КТ органов брюшной полости (ОБП)</label><br>
+            
+            <input type="checkbox" id="kt_omt" name="research" value="КТ ОМТ">
+            <label for="kt_omt">КТ органов малого таза (ОМТ)</label><br>
+            
+            <input type="checkbox" id="pet_ct" name="research" value="ПЭТ-КТ">
+            <label for="pet_ct">ПЭТ-КТ (любая область)</label><br>
+            
+            <input type="checkbox" id="mrt" name="research" value="МРТ">
+            <label for="mrt">МРТ</label>
+            <input type="text" id="mrt_area" placeholder="Укажите область" disabled>
+            <div class="warning" id="mrt_warning"></div>
+        </div>
+
+        <div class="step" id="serviceStep" style="display:none;">
+            <h3>Шаг 2. Выберите тип услуги:</h3>
+            <input type="radio" id="review" name="service" value="Пересмотр">
+            <label for="review">Пересмотр</label><br>
+            
+            <input type="radio" id="comparison" name="service" value="Сравнение">
+            <label for="comparison">Сравнение</label>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="calculate()">Рассчитать</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+<script>
+    // Активация поля для МРТ
+    document.getElementById('mrt').addEventListener('change', function() {
+        const mrtField = document.getElementById('mrt_area');
+        mrtField.disabled = !this.checked;
+        if (!this.checked) mrtField.value = '';
+    });
+
+    // Основная логика расчёта
+    function calculate() {
+        // Сбор данных
+        const researches = {
+            ktOGK: document.getElementById('kt_ogk').checked,
+            ktOBP: document.getElementById('kt_obp').checked,
+            ktOMT: document.getElementById('kt_omt').checked,
+            petCT: document.getElementById('pet_ct').checked,
+            mrt: document.getElementById('mrt').checked,
+            mrtArea: document.getElementById('mrt_area').value.trim()
+        };
+
+        // Проверка МРТ
+        if (researches.mrt && !researches.mrtArea) {
+            document.getElementById('mrt_warning').textContent = '⚠️ Укажите область МРТ!';
+            return;
+        } else {
+            document.getElementById('mrt_warning').textContent = '';
+        }
+
+        // Расчёт зон
+        let zones = 0;
+        if (researches.petCT) {
+            zones = 2; // Особое правило для ПЭТ-КТ
+        } else {
+            zones += researches.ktOGK ? 1 : 0;
+            zones += researches.ktOBP ? 1 : 0;
+            zones += researches.ktOMT ? 1 : 0;
+            zones += (researches.mrt && researches.mrtArea) ? 1 : 0;
+        }
+
+        // Показ второго шага
+        document.getElementById('serviceStep').style.display = zones > 0 ? 'block' : 'none';
+
+        // Вывод результата
+        const serviceType = document.querySelector('input[name="service"]:checked')?.value || 'не выбран';
+        const resultText = zones > 0 
+            ? `✅ Результат: ${zones} зон(ы), тип услуги — ${serviceType}`
+            : '⚠️ Выберите хотя бы одно исследование';
+        
+        document.getElementById('result').innerHTML = resultText;
+    }
+</script>
+</body>
+</html>
